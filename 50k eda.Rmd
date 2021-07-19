@@ -1,0 +1,134 @@
+---
+title: "50k EDA"
+author: "Dylan Scott"
+date: "7/19/2021"
+output: html_document
+---
+
+```{R}
+
+# read in the data from the website and look at some of the variables
+library(ggplot2)
+library(plyr)
+library(ROCR)
+adult <- read.table('adult.csv', 
+                    sep = ',', fill = F, strip.white = T)
+colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
+                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+                     'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
+head(adult)
+
+#The continuous variable fnlwgt represents final weight, which is the number of units in the target population that the responding unit represents. The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
+
+
+```
+
+
+# graphing continious variables
+```{R}
+
+# histogram of age by income group
+ggplot(adult) + aes(x=as.numeric(age), group=income, fill=income) + 
+  geom_histogram(binwidth=1, color='black')
+
+# histogram of age by gender group
+ggplot(adult) + aes(x=as.numeric(age), group=sex, fill=sex) + 
+  geom_histogram(binwidth=1, color='black')
+
+
+
+```
+
+# making working class a factor
+```{R}
+adult$workclass <- as.factor(adult$workclass)
+
+levels(adult$workclass)[1] <- 'Unknown'
+# combine into Government job
+adult$workclass <- gsub('^Federal-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^Local-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^State-gov', 'Government', adult$workclass) 
+
+# combine into Sele-Employed job
+adult$workclass <- gsub('^Self-emp-inc', 'Self-Employed', adult$workclass)
+adult$workclass <- gsub('^Self-emp-not-inc', 'Self-Employed', adult$workclass)
+
+# combine into Other/Unknown
+adult$workclass <- gsub('^Never-worked', 'Other', adult$workclass)
+adult$workclass <- gsub('^Without-pay', 'Other', adult$workclass)
+adult$workclass <- gsub('^Other', 'Unknown', adult$workclass)
+
+adult$workclass <- as.factor(adult$workclass)
+
+adult$workclass <- as.factor(adult$workclass)
+summary(adult$workclass)
+```
+
+# convert income to as factor
+```{R}
+adult$income <- as.factor(adult$income)
+
+
+adult$income <- gsub('^<=50K', 'below', adult$income)
+adult$income <- gsub('^>50K', 'above', adult$income)
+
+adult$income <- as.factor(adult$income)
+summary(adult$income)
+
+```
+
+```{R}
+
+# get the counts by industry and income group
+count <- table(adult[adult$workclass == 'Government',]$income)["below"]
+count <- c(count, table(adult[adult$workclass == 'Government',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Unknown',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Unknown',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Private',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Private',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Self-Employed',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Self-Employed',]$income)["above"])
+count <- as.numeric(count)
+
+# create a dataframe
+industry <- rep(levels(adult$workclass), each = 2)
+income <- rep(c('below', 'above'), 4)
+df <- data.frame(industry, income, count)
+df
+
+df <- ddply(df, .(industry), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df <- ddply(df, .(industry), transform, pos = (cumsum(count) - 0.5 * count))
+df$label <- paste0(sprintf("%.0f", df$percent), "%")
+
+ggplot(df, aes(x = industry, y = count, fill = income)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income by Industry')
+```
+
+#years of edu
+````{R}
+
+df1 <- data.frame(table(adult$income, adult$educatoin_num))
+names(df1) <- c('income', 'education_num', 'count')
+df1
+
+# calculate the percentages
+df1 <- ddply(df1, .(education_num), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df1 <- ddply(df1, .(education_num), transform, pos = (cumsum(count) - 0.5 * count))
+df1$label <- paste0(sprintf("%.0f", df1$percent), "%")
+
+# remove some in group percentage to avoid overlapped text
+df1$label[which(df1$percent < 5)] <- NA
+
+# bar plot of counts by years of education with in group proportions 
+ggplot(df1, aes(x = education_num, y = count, fill = income)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income Level with Years of Education')
+
+```
