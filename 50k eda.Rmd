@@ -14,7 +14,7 @@ library(ROCR)
 adult <- read.table('adult.csv', 
                     sep = ',', fill = F, strip.white = T)
 colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'education', 
-                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+                     'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adult)
 
@@ -111,7 +111,7 @@ ggplot(df, aes(x = industry, y = count, fill = income)) +
 #years of edu
 ````{R}
 
-df1 <- data.frame(table(adult$income, adult$educatoin_num))
+df1 <- data.frame(table(adult$income, adult$education_num))
 names(df1) <- c('income', 'education_num', 'count')
 df1
 
@@ -132,5 +132,4 @@ ggplot(df1, aes(x = education_num, y = count, fill = income)) +
   ggtitle('Income Level with Years of Education')
 
 ```
-
-
+               
