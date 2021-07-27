@@ -1,0 +1,499 @@
+---
+title: "50k EDA"
+author: "Dylan Scott"
+date: "7/19/2021"
+output: html_document
+---
+
+```{R}
+
+# read in the data from the website and look at some of the variables
+library(tidyverse)
+library(plyr)
+library(ROCR)
+
+adult <- read.csv('adult.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
+colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
+                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+                     'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
+head(adult, 15)
+
+adultTest <- read.csv('adultTest.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
+colnames(adultTest) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
+                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+                     'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
+head(adultTest, 15)
+
+
+#The continuous variable fnlwgt represents final weight, which is the number of units in the target population that the responding unit represents. The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
+
+
+#removing not needed vars
+adult$capital_gain <- NULL
+adult$capital_loss <- NULL
+adult$native_country <- NULL
+adult$educatoin <- NULL
+adult$fnlwgt <- NULL
+adult$relationship <- NULL
+
+adultTest$capital_gain <- NULL
+adultTest$capital_loss <- NULL
+adultTest$native_country <- NULL
+adultTest$educatoin <- NULL
+adultTest$fnlwgt <- NULL
+adultTest$relationship <- NULL
+
+# remove the boomers 90+
+adult<- na.omit(adult)
+adultTest<-na.omit(adultTest)
+
+
+#fnlwgt: will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
+#The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS.
+
+
+```
+
+
+# graphing continious variables
+```{R}
+
+# histogram of age by income group
+ggplot(adult) + aes(x=as.numeric(age), group=income, fill=income) + 
+  geom_histogram(binwidth=1, color='black')
+
+# histogram of age by gender group
+ggplot(adult) + aes(x=as.numeric(age), group=sex, fill=sex) + 
+  geom_histogram(binwidth=1, color='black')
+
+
+```
+
+# making working class a factor
+```{R}
+adult$workclass <- as.factor(adult$workclass)
+
+levels(adult$workclass)[1] <- 'Unknown'
+# combine into Government job
+adult$workclass <- gsub('^Federal-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^Local-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^State-gov', 'Government', adult$workclass) 
+
+# combine into Sale-Employed job
+adult$workclass <- gsub('^Self-emp-inc', 'Self-Employed', adult$workclass)
+adult$workclass <- gsub('^Self-emp-not-inc', 'Self-Employed', adult$workclass)
+
+# combine into Other/Unknown
+adult$workclass <- gsub('^Never-worked', 'Other', adult$workclass)
+adult$workclass <- gsub('^Without-pay', 'Other', adult$workclass)
+adult$workclass <- gsub('^Other', 'Unknown', adult$workclass)
+
+#split off other and see where their $$$$ lands compared to the cats since the never worked and without pay are dragging down their data
+
+
+adult$workclass <- as.factor(adult$workclass)
+
+summary(adult$workclass)
+```
+
+```{R}
+adultTest$workclass <- as.factor(adultTest$workclass)
+
+levels(adultTest$workclass)[1] <- 'Unknown'
+# combine into Government job
+adultTest$workclass <- gsub('^Federal-gov', 'Government', adultTest$workclass)
+adultTest$workclass <- gsub('^Local-gov', 'Government', adultTest$workclass)
+adultTest$workclass <- gsub('^State-gov', 'Government', adultTest$workclass) 
+
+# combine into Sale-Employed job
+adultTest$workclass <- gsub('^Self-emp-inc', 'Self-Employed', adultTest$workclass)
+adultTest$workclass <- gsub('^Self-emp-not-inc', 'Self-Employed', adultTest$workclass)
+
+# combine into Other/Unknown
+adultTest$workclass <- gsub('^Never-worked', 'Other', adultTest$workclass)
+adultTest$workclass <- gsub('^Without-pay', 'Other', adultTest$workclass)
+adultTest$workclass <- gsub('^Other', 'Unknown', adultTest$workclass)
+
+#split off other and see where their $$$$ lands compared to the cats since the never worked and without pay are dragging down their data
+
+
+adultTest$workclass <- as.factor(adultTest$workclass)
+
+```
+
+
+# convert income to as factor
+```{R}
+adult$income <- as.factor(adult$income)
+
+
+adult$income <- gsub('^<=50K', 'below', adult$income)
+adult$income <- gsub('^>50K', 'above', adult$income)
+
+adultTest$income <- gsub('^<=50K', 'below', adultTest$income)
+adultTest$income <- gsub('^>50K', 'above', adultTest$income)
+
+adult$income <- as.factor(adult$income)
+adultTest$income <- as.factor(adultTest$income)
+summary(adult$income)
+
+```
+
+```{R}
+
+count <- table(adult[adult$workclass == 'Government',]$income)["below"]
+count <- c(count, table(adult[adult$workclass == 'Government',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Unknown',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Unknown',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Private',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Private',]$income)["above"])
+count <- c(count, table(adult[adult$workclass == 'Self-Employed',]$income)["below"])
+count <- c(count, table(adult[adult$workclass == 'Self-Employed',]$income)["above"])
+count <- as.numeric(count)
+
+# create a dataframe
+industry <- rep(levels(adult$workclass), each = 2)
+income <- rep(c('below', 'above'), 4)
+df <- data.frame(industry, income, count)
+df
+
+# format the labels and calculate their positions
+df <- ddply(df, .(industry), transform, pos = (cumsum(count) - 0.5 * count))
+df$label <- paste0(sprintf("%.0f", df$percent), "%")
+
+df
+
+count
+
+
+count <- table(adult[adult$workclass == 'Government',]$income)["below"]
+count <- c(count, table(adultTest[adultTest$workclass == 'Government',]$income)["above"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Unknown',]$income)["below"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Unknown',]$income)["above"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Private',]$income)["below"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Private',]$income)["above"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Self-Employed',]$income)["below"])
+count <- c(count, table(adultTest[adultTest$workclass == 'Self-Employed',]$income)["above"])
+
+```
+
+#years of edu
+````{R}
+
+df1 <- data.frame(table(adult$income, adult$educatoin_num))
+names(df1) <- c('income', 'education_num', 'count')
+df1
+
+# calculate the percentages
+df1 <- ddply(df1, .(education_num), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df1 <- ddply(df1, .(education_num), transform, pos = (cumsum(count) - 0.5 * count))
+df1$label <- paste0(sprintf("%.0f", df1$percent), "%")
+
+# remove some in group percentage to avoid overlapped text
+df1$label[which(df1$percent < 5)] <- NA
+
+# bar plot of counts by years of education with in group proportions 
+ggplot(df1, aes(x = education_num, y = count, fill = forcats::fct_rev(income))) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Income Level")+
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income Level with Years of Education')
+
+
+```
+
+# cat of occupation
+```{R}
+levels(adult$occupation)[1] <- 'Unknown'
+adult$occupation <- gsub('Adm-clerical', 'White-Collar', adult$occupation)
+adult$occupation <- gsub('Craft-repair', 'Blue-Collar', adult$occupation)
+adult$occupation <- gsub('Exec-managerial', 'White-Collar', adult$occupation)
+adult$occupation <- gsub('Farming-fishing', 'Blue-Collar', adult$occupation)
+adult$occupation <- gsub('Handlers-cleaners', 'Blue-Collar', adult$occupation)
+adult$occupation <- gsub('Machine-op-inspct', 'Blue-Collar', adult$occupation)
+adult$occupation <- gsub('Other-service', 'Service', adult$occupation)
+adult$occupation <- gsub('Priv-house-serv', 'Service', adult$occupation)
+adult$occupation <- gsub('Prof-specialty', 'Professional', adult$occupation)
+adult$occupation <- gsub('Protective-serv', 'Service', adult$occupation)
+adult$occupation <- gsub('Tech-support', 'Service', adult$occupation)
+adult$occupation <- gsub('Transport-moving', 'Blue-Collar', adult$occupation)
+#adult$occupation <- gsub('unknown', 'Other', adult$occupation)
+#adult$occupation <- gsub('Armed-Forces', 'Other', adult$occupation)
+adult$occupation <- as.factor(adult$occupation)
+summary(adult$occupation)
+
+levels(adultTest$occupation)[1] <- 'Unknown'
+adultTest$occupation <- gsub('Adm-clerical', 'White-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Craft-repair', 'Blue-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Exec-managerial', 'White-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Farming-fishing', 'Blue-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Handlers-cleaners', 'Blue-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Machine-op-inspct', 'Blue-Collar', adultTest$occupation)
+adultTest$occupation <- gsub('Other-service', 'Service', adultTest$occupation)
+adultTest$occupation <- gsub('Priv-house-serv', 'Service', adultTest$occupation)
+adultTest$occupation <- gsub('Prof-specialty', 'Professional', adultTest$occupation)
+adultTest$occupation <- gsub('Protective-serv', 'Service', adultTest$occupation)
+adultTest$occupation <- gsub('Tech-support', 'Service', adultTest$occupation)
+adultTest$occupation <- gsub('Transport-moving', 'Blue-Collar', adultTest$occupation)
+adultTest$occupation <- as.factor(adultTest$occupation)
+
+# make df of type of job and what they make above or below
+
+df2 <- data.frame(table(adult$income, adult$occupation))
+names(df2) <- c('income', 'occupation', 'count')
+df2
+
+# calculate the percentages
+df2 <- ddply(df2, .(occupation), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df2 <- ddply(df2, .(occupation), transform, pos = (cumsum(count) - 0.5 * count))
+df2$label <- paste0(sprintf("%.0f", df2$percent), "%")
+
+# bar plot of counts by occupation with in group proportions 
+ggplot(df2, aes(x = occupation, y = count, fill = forcats::fct_rev(income))) +
+  scale_fill_discrete(name = "Income Level")+
+  geom_bar(stat = "identity") +
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income Level with Different Occupations')
+
+
+
+```
+
+
+```{R}
+adult$marital_status <- gsub('Married-AF-spouse', 'Married', adult$marital_status)
+adult$marital_status <- gsub('Married-civ-spouse', 'Married', adult$marital_status)
+adult$marital_status <- gsub('Married-spouse-absent', 'Married', adult$marital_status)
+adult$marital_status <- gsub('Never-married', 'Single', adult$marital_status)
+adult$marital_status <- as.factor(adult$marital_status)
+summary(adult$marital_status)
+
+adultTest$marital_status <- gsub('Married-AF-spouse', 'Married', adultTest$marital_status)
+adultTest$marital_status <- gsub('Married-civ-spouse', 'Married', adultTest$marital_status)
+adultTest$marital_status <- gsub('Married-spouse-absent', 'Married', adultTest$marital_status)
+adultTest$marital_status <- gsub('Never-married', 'Single', adultTest$marital_status)
+adultTest$marital_status <- as.factor(adultTest$marital_status)
+
+
+df3 <- data.frame(table(adult$income, adult$marital_status))
+names(df3) <- c('income', 'marital_status', 'count')
+df3
+
+df3 <- ddply(df3, .(marital_status), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df3 <- ddply(df3, .(marital_status), transform, pos = (cumsum(count) - 0.5 * count))
+df3$label <- paste0(sprintf("%.0f", df3$percent), "%")
+
+# bar plot of counts by marital status with in group proportions 
+ggplot(df3, aes(x = marital_status, y = count, fill = forcats::fct_rev(income))) +
+  scale_fill_discrete(name = "Income Level")+
+  geom_bar(stat = "identity") +
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income Level with Marital Status')
+
+
+```
+
+# now lets tackle race after all it was the 90s
+
+```{R}
+df4 <- data.frame(table(adult$income, adult$race))
+names(df4) <- c('income', 'race', 'count')
+df4
+df4 <- ddply(df4, .(race), transform, percent = count/sum(count) * 100)
+
+# format the labels and calculate their positions
+df4 <- ddply(df4, .(race), transform, pos = (cumsum(count) - 0.5 * count))
+df4$label <- paste0(sprintf("%.0f", df4$percent), "%")
+
+# do not display percentage for low counts categories
+df4$label[df4$race == 'Other'] <- NA
+df4$label[df4$race == 'Amer-Indian-Eskimo'] <- NA
+
+# bar plot of counts by marital status with in group proportions 
+ggplot(df4, aes(x = race, y = count, fill = forcats::fct_rev(income))) +
+  scale_fill_discrete(name = "Income Level")+
+  geom_bar(stat = "identity") +
+  geom_text(aes(y = pos, label = label), size = 2) + 
+  ggtitle('Income Level by Race')
+
+```
+```{R}
+
+
+m1 <- glm(income ~ ., data = adult, family = binomial('logit'))
+summary(m1)
+
+
+```
+
+## Obj 2
+```{R}
+#Make the log data
+adultLog <- adult
+adultLog$age <- log(adult$age)
+adultTestLog <- adultTest
+adultTestLog$age <- log(adultTestLog$age)
+#Do the logistic regression
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(lreg)
+
+#Copy Model into var
+completeModel <- lreg
+completeModel <- glm(income ~ 1, data = adultLog, family = binomial('logit'))
+
+# backward selection
+step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
+
+# forward selection
+step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
+
+#Plot Residuals
+index <- 1:dim(adultLog)[1]
+dev_resid <- residuals(lreg)
+income <- adultLog$income
+dff <- data.frame(index, dev_resid, income)
+
+p <- ggplot(dff, aes(x = index, y = dev_resid, color = income)) +
+  geom_point()+theme_minimal()+ggtitle("Residual Plot for Income Groups")+xlab("Subject #")+ylab("Residuals")
+p
+
+#Plot Cooks distance
+plot(lreg,which=4,id.n=3)
+
+#Plot Leverage
+plot(lreg,which = 5)
+
+#Do the predictions form test dataset
+probLog <- predict(lreg, adultTestLog, type = 'response')
+pred <- rep('below', length(probLog))
+pred[probLog>=.5] <- 'above'
+
+# Generate Confusion Matrix
+tb <- table(pred, adultTestLog$income)
+tb
+
+#Here we are doing some basic measures from the confusion matrix
+tbSum <- tb[1,1]+tb[1,2]+tb[2,1]+tb[2,2]
+tp <- tb[1,1]+tb[2,2]
+TPR <- tp/tbSum
+
+#Accuracy
+TPR
+
+#Error Rate
+ER <- (tb[2,1]+tb[1,2])/tbSum
+ER
+
+#Sensitivity
+SensitivityMetric <- (tb[1,1])/(tb[1,1]+tb[2,1])
+SensitivityMetric
+
+#Specificity
+SpecificityMetric <- (tb[2,2])/(tb[1,2]+tb[2,2])
+SpecificityMetric
+
+#Precision
+PrecisionMetric <- (tb[1,2])/(tb[1,1]+tb[2,1])
+PrecisionMetric
+
+#False Positive Rate
+FPR <- 1-SpecificityMetric
+FPR
+
+```
+
+#non logged age and no 90+ WORK IN PROGRESS
+```{R}
+#Remove the boomers
+adultNine<-select(adult,adult$age != 90)
+
+
+#Do the logistic regression
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(lreg)
+
+#Copy Model into var
+completeModel <- lreg
+completeModel <- glm(income ~ 1, data = adultLog, family = binomial('logit'))
+
+# backward selection
+step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
+
+# forward selection
+step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
+
+#Plot Residuals
+index <- 1:dim(adultLog)[1]
+dev_resid <- residuals(lreg)
+income <- adultLog$income
+dff <- data.frame(index, dev_resid, income)
+
+p <- ggplot(dff, aes(x = index, y = dev_resid, color = income)) +
+  geom_point()+theme_minimal()+ggtitle("Residual Plot for Income Groups")+xlab("Subject #")+ylab("Residuals")
+p
+
+#Plot Cooks distance
+plot(lreg,which=4,id.n=3)
+
+#Plot Leverage
+plot(lreg,which = 5)
+
+#Do the predictions form test dataset
+probLog <- predict(lreg, adultTestLog, type = 'response')
+pred <- rep('below', length(probLog))
+pred[probLog>=.5] <- 'above'
+
+# Generate Confusion Matrix
+tb <- table(pred, adultTestLog$income)
+tb
+
+#Here we are doing some basic measures from the confusion matrix
+tbSum <- tb[1,1]+tb[1,2]+tb[2,1]+tb[2,2]
+tp <- tb[1,1]+tb[2,2]
+TPR <- tp/tbSum
+
+#Accuracy
+TPR
+
+#Error Rate
+ER <- (tb[2,1]+tb[1,2])/tbSum
+ER
+
+#Sensitivity
+SensitivityMetric <- (tb[1,1])/(tb[1,1]+tb[2,1])
+SensitivityMetric
+
+#Specificity
+SpecificityMetric <- (tb[2,2])/(tb[1,2]+tb[2,2])
+SpecificityMetric
+
+#Precision
+PrecisionMetric <- (tb[1,2])/(tb[1,1]+tb[2,1])
+PrecisionMetric
+
+#False Positive Rate
+FPR <- 1-SpecificityMetric
+FPR
+
+```
+
+```{R}
+library(randomForest)
+rf3 <- randomForest(income ~ ., data = adult, ntree = 1000)
+rf3.pred.prob <- predict(rf3, newdata = adultTest, type = 'prob')
+rf3.pred <- predict(rf3, newdata = adultTest, type = 'class')
+# confusion matrix 
+tb3 <- table(rf3.pred, adultTest$income)
+tb3
+
+```
