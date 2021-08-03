@@ -12,16 +12,9 @@ library(tidyverse)
 library(plyr)
 library(ROCR)
 
-
 adult <- read.csv('adult.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
 colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
                      'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
-
-adult <- read.csv('adult.csv', 
-                    sep = ',', fill = F, strip.white = T, na.strings = "?")
-colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'education', 
-                     'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
-
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adult, 15)
 
@@ -187,7 +180,7 @@ count <- c(count, table(adultTest[adultTest$workclass == 'Self-Employed',]$incom
 #years of edu
 ````{R}
 
-df1 <- data.frame(table(adult$income, adult$education_num))
+df1 <- data.frame(table(adult$income, adult$educatoin_num))
 names(df1) <- c('income', 'education_num', 'count')
 df1
 
@@ -305,7 +298,6 @@ ggplot(df3, aes(x = marital_status, y = count, fill = forcats::fct_rev(income)))
 
 
 ```
-
 
 # now lets tackle race after all it was the 90s
 
@@ -505,5 +497,3 @@ tb3 <- table(rf3.pred, adultTest$income)
 tb3
 
 ```
-=======
-               
