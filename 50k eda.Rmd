@@ -332,7 +332,7 @@ summary(m1)
 
 ```
 
-## Obj 2
+## Obj 2 with age LOG
 ```{R}
 #Make the log data
 adultLog <- adult
@@ -410,21 +410,22 @@ FPR
 
 ```
 
-#non logged age and no 90+ WORK IN PROGRESS
+#non logged age and no 90+ 
 ```{R}
 #Remove the boomers
-adultNine<-select(adult,adult$age != 90)
+# used filter over select
+adultNine<-filter(adult,adult$age != 90)
 
 
 #Do the logistic regression
-lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+lreg <- glm(income~.,data=adultNine,family = binomial('logit'))
 
 #Generate Summary Stats
 summary(lreg)
 
 #Copy Model into var
 completeModel <- lreg
-completeModel <- glm(income ~ 1, data = adultLog, family = binomial('logit'))
+completeModel <- glm(income ~ 1, data = adultNine, family = binomial('logit'))
 
 # backward selection
 step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
@@ -433,9 +434,9 @@ step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=
 step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
 
 #Plot Residuals
-index <- 1:dim(adultLog)[1]
+index <- 1:dim(adultNine)[1]
 dev_resid <- residuals(lreg)
-income <- adultLog$income
+income <- adultNine$income
 dff <- data.frame(index, dev_resid, income)
 
 p <- ggplot(dff, aes(x = index, y = dev_resid, color = income)) +
