@@ -332,8 +332,9 @@ summary(m1)
 
 ```
 
-## Obj 2 with age LOG
+# Log of age no forward or backward selection
 ```{R}
+
 #Make the log data
 adultLog <- adult
 adultLog$age <- log(adult$age)
@@ -345,16 +346,67 @@ lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
 #Generate Summary Stats
 summary(lreg)
 
+```
+
+#just removing the 90 year olds
+```{R}
+# used filter over select
+adultNine<-filter(adult,adult$age != 90)
+
+
+#Do the logistic regression
+nreg <- glm(income~.,data=adultNine,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(nreg)
+
+
+```
+
+# remove 90+ and log the age
+```{R}
+# remove 90+
+adultNine<-filter(adult,adult$age != 90)
+#Make the log data
+adultLog <- adultNine
+adultLog$age <- log(adultNine$age)
+adultTestLog <- adultTest
+adultTestLog$age <- log(adultTestLog$age)
+#Do the logistic regression
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(lreg)
+
+
+```
+
+
+## Obj 2 with age LOG and 90 plus removed
+```{R}
+# remove 90+
+adultNine<-filter(adult,adult$age != 90)
+adultNine<-filter(adultTest,adultTest$age != 90)
+#Make the log data
+adultLog <- adultNine
+adultLog$age <- log(adultNine$age)
+adultTestLog <- adultTest
+adultTestLog$age <- log(adultTestLog$age)
+#Do the logistic regression
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(lreg)
+
 #Copy Model into var
 completeModel <- lreg
-completeModel <- glm(income ~ 1, data = adultLog, family = binomial('logit'))
 
 # backward selection
-step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
+#step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
 
 # forward selection
-step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
-
+completeModel<- step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
+summary(completeModel)
 #Plot Residuals
 index <- 1:dim(adultLog)[1]
 dev_resid <- residuals(lreg)
@@ -373,8 +425,8 @@ plot(lreg,which = 5)
 
 #Do the predictions form test dataset
 probLog <- predict(lreg, adultTestLog, type = 'response')
-pred <- rep('below', length(probLog))
-pred[probLog>=.5] <- 'above'
+pred <- rep('above', length(probLog))
+pred[probLog>=.5] <- 'below'
 
 # Generate Confusion Matrix
 tb <- table(pred, adultTestLog$income)
@@ -487,6 +539,8 @@ FPR <- 1-SpecificityMetric
 FPR
 
 ```
+
+
 
 ```{R}
 library(randomForest)
