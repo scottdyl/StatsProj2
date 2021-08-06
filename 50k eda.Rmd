@@ -584,32 +584,29 @@ rf3.resp.test <- predict(rf3, adultTestLog, type = 'response')
 pred <- rep('below', length(rf3.resp))
 pred[rf3.resp.test>=.5] <- 'above'
 
-# Generate Confusion Matrix
-tb <- table(pred, adultTestLog$income)
-tb
 
 #Here we are doing some basic measures from the confusion matrix
-tbSum <- tb[1,1]+tb[1,2]+tb[2,1]+tb[2,2]
-tp <- tb[1,1]+tb[2,2]
+tbSum <- tb3[1,1]+tb3[1,2]+tb[2,1]+tb3[2,2]
+tp <- tb3[1,1]+tb3[2,2]
 TPR <- tp/tbSum
 
 #Accuracy
 TPR
 
 #Error Rate
-ER <- (tb[2,1]+tb[1,2])/tbSum
+ER <- (tb3[2,1]+tb3[1,2])/tbSum
 ER
 
 #Sensitivity
-SensitivityMetric <- (tb[1,1])/(tb[1,1]+tb[2,1])
+SensitivityMetric <- (tb3[1,1])/(tb3[1,1]+tb3[2,1])
 SensitivityMetric
 
 #Specificity
-SpecificityMetric <- (tb[2,2])/(tb[1,2]+tb[2,2])
+SpecificityMetric <- (tb3[2,2])/(tb3[1,2]+tb3[2,2])
 SpecificityMetric
 
 #Precision
-PrecisionMetric <- (tb[1,2])/(tb[1,1]+tb[2,1])
+PrecisionMetric <- (tb3[1,2])/(tb3[1,1]+tb3[2,1])
 PrecisionMetric
 
 #False Positive Rate
@@ -630,7 +627,8 @@ prf1 <- performance(pr1, measure = "tpr", x.measure = "fpr")
 pr2 <- prediction(probLogF, adultTestLog$income)
 prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
 
-pr3 <- prediction(rf3.resp, adultTestLog$income)
+pr3 <- prediction(as.numeric(rf3.resp), adultTestLog$income)
+#pr3 <- performance(pr3, 'tpr','fpr')
 prf3 <- performance(pr3, measure = "tpr", x.measure = "fpr")
 
 # create a data frame for TP and FP rates
