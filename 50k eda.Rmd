@@ -636,8 +636,8 @@ prf3 <- performance(pr3, measure = "tpr", x.measure = "fpr")
 # create a data frame for TP and FP rates
 dd <- data.frame(FP = prf@x.values[[1]], TP = prf@y.values[[1]])
 dd1 <- data.frame(FP = prf1@x.values[[1]], TP = prf1@y.values[[1]])
-dd2 <- data.frame(FP = prf2@x.values[[1]], TP = prf1@y.values[[1]])
-dd3 <- data.frame(FP = prf3@x.values[[1]], TP = prf1@y.values[[1]])
+dd2 <- data.frame(FP = prf2@x.values[[1]], TP = prf2@y.values[[1]])
+dd3 <- data.frame(FP = prf3@x.values[[1]], TP = prf3@y.values[[1]])
 
 # plot ROC curve for logistic regression
 gplots <- ggplot() + 
