@@ -329,6 +329,42 @@ ggplot(df4, aes(x = race, y = count, fill = forcats::fct_rev(income))) +
 m1 <- glm(income ~ ., data = adult, family = binomial('logit'))
 summary(m1)
 
+#Do the predictions form test dataset
+prob <- predict(m1, adultTest, type = 'response')
+pred <- rep('above', length(prob))
+pred[prob>=.5] <- 'below'
+
+# Generate Confusion Matrix
+tb <- table(pred, adultTest$income)
+tb
+
+#Here we are doing some basic measures from the confusion matrix
+tbSum <- tb[1,1]+tb[1,2]+tb[2,1]+tb[2,2]
+tp <- tb[1,1]+tb[2,2]
+TPR <- tp/tbSum
+
+#Accuracy
+TPR
+
+#Error Rate
+ER <- (tb[2,1]+tb[1,2])/tbSum
+ER
+
+#Sensitivity
+SensitivityMetric <- (tb[1,1])/(tb[1,1]+tb[2,1])
+SensitivityMetric
+
+#Specificity
+SpecificityMetric <- (tb[2,2])/(tb[1,2]+tb[2,2])
+SpecificityMetric
+
+#Precision
+PrecisionMetric <- (tb[1,2])/(tb[1,1]+tb[2,1])
+PrecisionMetric
+
+#False Positive Rate
+FPR <- 1-SpecificityMetric
+FPR
 
 ```
 
@@ -378,39 +414,10 @@ lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
 #Generate Summary Stats
 summary(lreg)
 
-
-```
-
-
-## Obj 2 with age LOG and 90 plus removed
-```{R}
-# remove 90+
-adultNine<-filter(adult,adult$age != 90)
-adultNine<-filter(adultTest,adultTest$age != 90)
-#Make the log data
-adultLog <- adultNine
-adultLog$age <- log(adultNine$age)
-adultTestLog <- adultTest
-adultTestLog$age <- log(adultTestLog$age)
-#Do the logistic regression
-lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
-
-#Generate Summary Stats
-summary(lreg)
-
-#Copy Model into var
-completeModel <- lreg
-
-# backward selection
-#step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
-
-# forward selection
-completeModel<- step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
-summary(completeModel)
 #Plot Residuals
-index <- 1:dim(adultLog)[1]
+index <- 1:dim(adultNine)[1]
 dev_resid <- residuals(lreg)
-income <- adultLog$income
+income <- adultNine$income
 dff <- data.frame(index, dev_resid, income)
 
 p <- ggplot(dff, aes(x = index, y = dev_resid, color = income)) +
@@ -462,33 +469,36 @@ FPR
 
 ```
 
-#non logged age and no 90+ 
+
+## Obj 2 with age LOG and 90 plus removed
 ```{R}
-#Remove the boomers
-# used filter over select
+# remove 90+
 adultNine<-filter(adult,adult$age != 90)
-
-
+adultNine<-filter(adultTest,adultTest$age != 90)
+#Make the log data
+adultLog <- adultNine
+adultLog$age <- log(adultNine$age)
+adultTestLog <- adultTest
+adultTestLog$age <- log(adultTestLog$age)
 #Do the logistic regression
-lreg <- glm(income~.,data=adultNine,family = binomial('logit'))
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
 
 #Generate Summary Stats
 summary(lreg)
 
 #Copy Model into var
 completeModel <- lreg
-completeModel <- glm(income ~ 1, data = adultNine, family = binomial('logit'))
 
 # backward selection
-step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
+#step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'backward')
 
 # forward selection
-step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
-
+completeModel<- step(completeModel, trace = F, scope = list(lower=formula(completeModel), upper=formula(completeModel)),direction = 'forward')
+summary(completeModel)
 #Plot Residuals
-index <- 1:dim(adultNine)[1]
+index <- 1:dim(adultLog)[1]
 dev_resid <- residuals(lreg)
-income <- adultNine$income
+income <- adultLog$income
 dff <- data.frame(index, dev_resid, income)
 
 p <- ggplot(dff, aes(x = index, y = dev_resid, color = income)) +
@@ -502,9 +512,9 @@ plot(lreg,which=4,id.n=3)
 plot(lreg,which = 5)
 
 #Do the predictions form test dataset
-probLog <- predict(lreg, adultTestLog, type = 'response')
-pred <- rep('below', length(probLog))
-pred[probLog>=.5] <- 'above'
+probLogF <- predict(lreg, adultTestLog, type = 'response')
+pred <- rep('above', length(probLogF))
+pred[probLogF>=.5] <- 'below'
 
 # Generate Confusion Matrix
 tb <- table(pred, adultTestLog$income)
@@ -541,14 +551,103 @@ FPR
 ```
 
 
-
 ```{R}
 library(randomForest)
-rf3 <- randomForest(income ~ ., data = adult, ntree = 1000)
-rf3.pred.prob <- predict(rf3, newdata = adultTest, type = 'prob')
-rf3.pred <- predict(rf3, newdata = adultTest, type = 'class')
+
+# remove 90+
+adultNine<-filter(adult,adult$age != 90)
+adultNine<-filter(adultTest,adultTest$age != 90)
+#Make the log data
+adultLog <- adultNine
+adultLog$age <- log(adultNine$age)
+adultTestLog <- adultTest
+adultTestLog$age <- log(adultTestLog$age)
+#Do the logistic regression
+lreg <- glm(income~.,data=adultLog,family = binomial('logit'))
+
+#Generate Summary Stats
+summary(lreg)
+
+#Copy Model into var
+completeModel <- lreg
+
+rf3 <- randomForest(income ~ ., data = adultLog, ntree = 1000)
+rf3.pred.prob <- predict(rf3, newdata = adultTestLog, type = 'prob')
+rf3.pred <- predict(rf3, newdata = adultTestLog, type = 'class')
+rf3.resp <- predict(rf3, newdata = adultTestLog, type = 'response')
 # confusion matrix 
-tb3 <- table(rf3.pred, adultTest$income)
+tb3 <- table(rf3.pred, adultTestLog$income)
 tb3
+
+#Do the predictions form test dataset
+rf3.resp.test <- predict(rf3, adultTestLog, type = 'response')
+pred <- rep('below', length(rf3.resp))
+pred[rf3.resp.test>=.5] <- 'above'
+
+# Generate Confusion Matrix
+tb <- table(pred, adultTestLog$income)
+tb
+
+#Here we are doing some basic measures from the confusion matrix
+tbSum <- tb[1,1]+tb[1,2]+tb[2,1]+tb[2,2]
+tp <- tb[1,1]+tb[2,2]
+TPR <- tp/tbSum
+
+#Accuracy
+TPR
+
+#Error Rate
+ER <- (tb[2,1]+tb[1,2])/tbSum
+ER
+
+#Sensitivity
+SensitivityMetric <- (tb[1,1])/(tb[1,1]+tb[2,1])
+SensitivityMetric
+
+#Specificity
+SpecificityMetric <- (tb[2,2])/(tb[1,2]+tb[2,2])
+SpecificityMetric
+
+#Precision
+PrecisionMetric <- (tb[1,2])/(tb[1,1]+tb[2,1])
+PrecisionMetric
+
+#False Positive Rate
+FPR <- 1-SpecificityMetric
+FPR
+
+```
+
+#ROC curves
+```{R}
+# create a prediction object
+pr <- prediction(prob, adultTest$income)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+pr1 <- prediction(probLog, adultTestLog$income)
+prf1 <- performance(pr1, measure = "tpr", x.measure = "fpr")
+
+pr2 <- prediction(probLogF, adultTestLog$income)
+prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
+
+pr3 <- prediction(rf3.resp, adultTestLog$income)
+prf3 <- performance(pr3, measure = "tpr", x.measure = "fpr")
+
+# create a data frame for TP and FP rates
+dd <- data.frame(FP = prf@x.values[[1]], TP = prf@y.values[[1]])
+dd1 <- data.frame(FP = prf1@x.values[[1]], TP = prf1@y.values[[1]])
+dd2 <- data.frame(FP = prf2@x.values[[1]], TP = prf1@y.values[[1]])
+dd3 <- data.frame(FP = prf3@x.values[[1]], TP = prf1@y.values[[1]])
+
+# plot ROC curve for logistic regression
+gplots <- ggplot() + 
+  geom_line(data = dd, aes(x = FP, y = TP, color = 'Base Model')) + 
+  geom_line(data = dd1, aes(x = FP, y = TP, color = 'Removal of 90+ and Log age')) +
+  geom_line(data = dd2, aes(x = FP, y = TP, color = 'Forward selection')) + 
+  geom_line(data = dd3, aes(x = FP, y = TP, color = 'Random Forest')) +
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
+  ggtitle('ROC Curve') + 
+  labs(x = 'False Positive Rate', y = 'True Positive Rate')
+gplots
 
 ```
