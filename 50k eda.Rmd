@@ -7,9 +7,9 @@ output: html_document
 
 ```{R}
 
-# read in the data from the website and look at some of the variables
-library(tidyverse)
+# Read in the data from the csv file from the website and look at some of the variables
 library(plyr)
+library(tidyverse)
 library(ROCR)
 
 adult <- read.csv('adult.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
@@ -18,21 +18,30 @@ colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'educatoin',
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adult, 15)
 
+# Looking at the structure of the data frame and getting summary statistics
+str(adult)
+summary(adult)
+
 adultTest <- read.csv('adultTest.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
 colnames(adultTest) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
                      'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adultTest, 15)
+str(adultTest)
+summary(adultTest)
 
+# The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
 
-#The continuous variable fnlwgt represents final weight, which is the number of units in the target population that the responding unit represents. The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
-
+# TODO: Discuss reasons why these vars are not needed
 
 #removing not needed vars
 adult$capital_gain <- NULL
 adult$capital_loss <- NULL
 adult$native_country <- NULL
 adult$educatoin <- NULL
+
+# fnlwgt will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
+# "The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS."
 adult$fnlwgt <- NULL
 adult$relationship <- NULL
 
@@ -46,11 +55,6 @@ adultTest$relationship <- NULL
 # remove the boomers 90+
 adult<- na.omit(adult)
 adultTest<-na.omit(adultTest)
-
-
-#fnlwgt: will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
-#The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS.
-
 
 ```
 
@@ -325,6 +329,8 @@ ggplot(df4, aes(x = race, y = count, fill = forcats::fct_rev(income))) +
 ```
 ```{R}
 
+# TODO: need to discuss this comment from unit 12 HW that talks about the project
+# "9.	The reason why predicted probabilities and converting them to categories to make predictions is so important is because choosing the cutoff of 0.5 is somewhat arbitrary. In fact, if your training data set is highly imbalanced (like your project), the standard cutoff can lead to some problematic confusion matrices. I’ve already suggested that you guys balance training data sets in advance. This helps with keeping the cutoff at 0.5. The alternative strategy is to change the cutoff. The resulting confusion matrix from changing the cutoff could help/or hurt overall accuracy. You just have to explore. "
 
 m1 <- glm(income ~ ., data = adult, family = binomial('logit'))
 summary(m1)
@@ -549,6 +555,12 @@ FPR <- 1-SpecificityMetric
 FPR
 
 ```
+## Objective 2: model with only continous predictors
+```{R}
+continuous_log<-glm(income ~ age + hours_per_week,family="binomial",data=adult)
+summary(continuous_log)
+```
+
 
 
 ```{R}
