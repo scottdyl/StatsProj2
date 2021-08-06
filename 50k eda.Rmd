@@ -629,6 +629,8 @@ prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
 
 pr3 <- prediction(as.numeric(rf3.resp), adultTestLog$income)
 #pr3 <- performance(pr3, 'tpr','fpr')
+AUC<- performance(pr3,"auc")
+slot(AUC, "y.values")
 prf3 <- performance(pr3, measure = "tpr", x.measure = "fpr")
 
 # create a data frame for TP and FP rates
@@ -645,7 +647,7 @@ gplots <- ggplot() +
   geom_line(data = dd3, aes(x = FP, y = TP, color = 'Random Forest')) +
   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
   ggtitle('ROC Curve') + 
-  labs(x = 'False Positive Rate', y = 'True Positive Rate')
+  labs(x = 'Sensitivity', y = 'Specificity')
 gplots
 
 ```
