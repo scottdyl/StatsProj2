@@ -641,13 +641,15 @@ prf2 <- performance(pr2, measure = "tpr", x.measure = "fpr")
 
 pr3 <- prediction(as.numeric(rf3.resp), adultTestLog$income)
 #pr3 <- performance(pr3, 'tpr','fpr')
+AUC<- performance(pr3,"auc")
+slot(AUC, "y.values")
 prf3 <- performance(pr3, measure = "tpr", x.measure = "fpr")
 
 # create a data frame for TP and FP rates
 dd <- data.frame(FP = prf@x.values[[1]], TP = prf@y.values[[1]])
 dd1 <- data.frame(FP = prf1@x.values[[1]], TP = prf1@y.values[[1]])
-dd2 <- data.frame(FP = prf2@x.values[[1]], TP = prf1@y.values[[1]])
-dd3 <- data.frame(FP = prf3@x.values[[1]], TP = prf1@y.values[[1]])
+dd2 <- data.frame(FP = prf2@x.values[[1]], TP = prf2@y.values[[1]])
+dd3 <- data.frame(FP = prf3@x.values[[1]], TP = prf3@y.values[[1]])
 
 # plot ROC curve for logistic regression
 gplots <- ggplot() + 
@@ -657,7 +659,7 @@ gplots <- ggplot() +
   geom_line(data = dd3, aes(x = FP, y = TP, color = 'Random Forest')) +
   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
   ggtitle('ROC Curve') + 
-  labs(x = 'False Positive Rate', y = 'True Positive Rate')
+  labs(x = 'Sensitivity', y = 'Specificity')
 gplots
 
 ```
