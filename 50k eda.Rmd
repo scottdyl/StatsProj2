@@ -328,10 +328,6 @@ ggplot(df4, aes(x = race, y = count, fill = forcats::fct_rev(income))) +
 
 ```
 ```{R}
-
-# TODO: need to discuss this comment from unit 12 HW that talks about the project
-# "9.	The reason why predicted probabilities and converting them to categories to make predictions is so important is because choosing the cutoff of 0.5 is somewhat arbitrary. In fact, if your training data set is highly imbalanced (like your project), the standard cutoff can lead to some problematic confusion matrices. I’ve already suggested that you guys balance training data sets in advance. This helps with keeping the cutoff at 0.5. The alternative strategy is to change the cutoff. The resulting confusion matrix from changing the cutoff could help/or hurt overall accuracy. You just have to explore. "
-
 m1 <- glm(income ~ ., data = adult, family = binomial('logit'))
 summary(m1)
 
@@ -557,7 +553,7 @@ FPR
 ```
 ## Objective 2: model with only continous predictors
 ```{R}
-continuous_log<-glm(income ~ age + hours_per_week,family="binomial",data=adult)
+continuous_log<-glm(income ~ age + hours_per_week + education_num,family="binomial",data=adult)
 summary(continuous_log)
 ```
 
