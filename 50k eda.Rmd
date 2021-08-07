@@ -28,12 +28,16 @@ head(adultTest, 15)
 #The continuous variable fnlwgt represents final weight, which is the number of units in the target population that the responding unit represents. The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
 
 
-#removing not needed vars
+#not enough data
 adult$capital_gain <- NULL
 adult$capital_loss <- NULL
+# explained the same as race
 adult$native_country <- NULL
+#conflicted with years of education
 adult$educatoin <- NULL
+#guess of their weight
 adult$fnlwgt <- NULL
+#same as marital status
 adult$relationship <- NULL
 
 adultTest$capital_gain <- NULL
@@ -44,6 +48,7 @@ adultTest$fnlwgt <- NULL
 adultTest$relationship <- NULL
 
 # remove the boomers 90+
+#this makes it continuous variables
 adult<- na.omit(adult)
 adultTest<-na.omit(adultTest)
 
@@ -75,7 +80,7 @@ adult$workclass <- as.factor(adult$workclass)
 
 levels(adult$workclass)[1] <- 'Unknown'
 # combine into Government job
-adult$workclass <- gsub('^Federal-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^Federal-gov', 'Government', adult$wortokclass)
 adult$workclass <- gsub('^Local-gov', 'Government', adult$workclass)
 adult$workclass <- gsub('^State-gov', 'Government', adult$workclass) 
 
