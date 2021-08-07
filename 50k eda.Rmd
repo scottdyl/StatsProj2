@@ -1,6 +1,6 @@
 ---
 title: "50k EDA"
-author: "Dylan Scott"
+author: "Dylan Scott, DJ Dawkins, Alex Jasserme"
 date: "7/19/2021"
 output: html_document
 ---
@@ -34,15 +34,23 @@ summary(adultTest)
 
 # TODO: Discuss reasons why these vars are not needed
 
-#removing not needed vars
+#not enough data
 adult$capital_gain <- NULL
 adult$capital_loss <- NULL
+# explained the same as race
 adult$native_country <- NULL
+
+#conflicted with years of education
+adult$educatoin <- NULL
+#guess of their weight
+
 adult$education <- NULL
 
 # fnlwgt will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
 # "The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS."
+
 adult$fnlwgt <- NULL
+#same as marital status
 adult$relationship <- NULL
 
 adultTest$capital_gain <- NULL
@@ -53,6 +61,7 @@ adultTest$fnlwgt <- NULL
 adultTest$relationship <- NULL
 
 # remove the boomers 90+
+#this makes it continuous variables
 adult<- na.omit(adult)
 adultTest<-na.omit(adultTest)
 
@@ -79,7 +88,7 @@ adult$workclass <- as.factor(adult$workclass)
 
 levels(adult$workclass)[1] <- 'Unknown'
 # combine into Government job
-adult$workclass <- gsub('^Federal-gov', 'Government', adult$workclass)
+adult$workclass <- gsub('^Federal-gov', 'Government', adult$wortokclass)
 adult$workclass <- gsub('^Local-gov', 'Government', adult$workclass)
 adult$workclass <- gsub('^State-gov', 'Government', adult$workclass) 
 
