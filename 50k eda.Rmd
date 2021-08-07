@@ -87,7 +87,7 @@ adult$workclass <- as.factor(adult$workclass)
 
 levels(adult$workclass)[1] <- 'Unknown'
 # combine into Government job
-adult$workclass <- gsub('^Federal-gov', 'Government', adult$wortokclass)
+adult$workclass <- gsub('^Federal-gov', 'Government', adult$workclass)
 adult$workclass <- gsub('^Local-gov', 'Government', adult$workclass)
 adult$workclass <- gsub('^State-gov', 'Government', adult$workclass) 
 
