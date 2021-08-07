@@ -13,8 +13,8 @@ library(tidyverse)
 library(ROCR)
 
 adult <- read.csv('adult.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
-colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
-                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+colnames(adult) <- c('age', 'workclass', 'fnlwgt', 'education', 
+                     'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adult, 15)
 
@@ -23,8 +23,8 @@ str(adult)
 summary(adult)
 
 adultTest <- read.csv('adultTest.csv', sep = ',', fill = F, strip.white = T, na.strings = "?")
-colnames(adultTest) <- c('age', 'workclass', 'fnlwgt', 'educatoin', 
-                     'educatoin_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
+colnames(adultTest) <- c('age', 'workclass', 'fnlwgt', 'education', 
+                     'education_num', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 
                      'capital_gain', 'capital_loss', 'hours_per_week', 'native_country', 'income')
 head(adultTest, 15)
 str(adultTest)
@@ -38,7 +38,7 @@ summary(adultTest)
 adult$capital_gain <- NULL
 adult$capital_loss <- NULL
 adult$native_country <- NULL
-adult$educatoin <- NULL
+adult$education <- NULL
 
 # fnlwgt will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
 # "The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS."
@@ -48,7 +48,7 @@ adult$relationship <- NULL
 adultTest$capital_gain <- NULL
 adultTest$capital_loss <- NULL
 adultTest$native_country <- NULL
-adultTest$educatoin <- NULL
+adultTest$education <- NULL
 adultTest$fnlwgt <- NULL
 adultTest$relationship <- NULL
 
@@ -184,7 +184,7 @@ count <- c(count, table(adultTest[adultTest$workclass == 'Self-Employed',]$incom
 #years of edu
 ````{R}
 
-df1 <- data.frame(table(adult$income, adult$educatoin_num))
+df1 <- data.frame(table(adult$income, adult$education_num))
 names(df1) <- c('income', 'education_num', 'count')
 df1
 
