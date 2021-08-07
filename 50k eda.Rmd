@@ -32,25 +32,24 @@ summary(adultTest)
 
 # The variable education_num stands for the number of years of education in total, which is a continuous representation of the discrete variable education. The variable relationship represents the responding unit’s role in the family. capital_gain and capital_loss are income from investment sources other than wage/salary.
 
-# TODO: Discuss reasons why these vars are not needed
-
-#not enough data
+# not enough data
 adult$capital_gain <- NULL
 adult$capital_loss <- NULL
+
 # explained the same as race
 adult$native_country <- NULL
 
-#conflicted with years of education
+# conflicted with years of education
 adult$educatoin <- NULL
-#guess of their weight
 
+# guess of their weight
 adult$education <- NULL
 
 # fnlwgt will not be a good income predictor, so we can drop this column. From: https://www2.census.gov/programs-surveys/cps/techdocs/cpsmar13.pdf
 # "The final weight, which is the product of several adjustments, is used to produce population estimates for the various items covered in the regular monthly CPS."
-
 adult$fnlwgt <- NULL
-#same as marital status
+
+# same as marital status
 adult$relationship <- NULL
 
 adultTest$capital_gain <- NULL
