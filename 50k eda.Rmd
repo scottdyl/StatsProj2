@@ -1,6 +1,6 @@
 ---
 title: "50k EDA"
-author: "Dylan Scott"
+author: "Dylan Scott, DJ Dawkins, Alex Jasserme"
 date: "7/19/2021"
 output: html_document
 ---
